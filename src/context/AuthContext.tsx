@@ -1,13 +1,14 @@
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { Session, User } from '@/types';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import type { User as SupabaseUser, Session as SupabaseSession } from '@supabase/supabase-js';
+import { User, Profile } from '@/types';
 
 interface AuthContextType {
-  session: Session | null;
+  session: SupabaseSession | null;
   user: User | null;
-  profile: any;
+  profile: Profile | null;
   isLoading: boolean;
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (email: string, password: string, userData: { name: string }) => Promise<void>;
@@ -27,9 +28,9 @@ const AuthContext = createContext<AuthContextType>({
 });
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [session, setSession] = useState<Session | null>(null);
+  const [session, setSession] = useState<SupabaseSession | null>(null);
   const [user, setUser] = useState<User | null>(null);
-  const [profile, setProfile] = useState<any>(null);
+  const [profile, setProfile] = useState<Profile | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const { toast } = useToast();
 
@@ -55,11 +56,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     // Check for active session
     supabase.auth.getSession().then(({ data: { session } }) => {
+      // Convert Supabase session to our session type for state
       setSession(session);
-      setUser(session?.user ?? null);
-      
       if (session?.user) {
+        const userWithEmail: User = {
+          id: session.user.id,
+          email: session.user.email || undefined
+        };
+        setUser(userWithEmail);
         fetchUserProfile(session.user.id);
+      } else {
+        setUser(null);
       }
       
       setIsLoading(false);
@@ -69,13 +76,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (_event, session) => {
         setSession(session);
-        setUser(session?.user ?? null);
-        
         if (session?.user) {
+          const userWithEmail: User = {
+            id: session.user.id,
+            email: session.user.email || undefined
+          };
+          setUser(userWithEmail);
+          
           setTimeout(() => {
             fetchUserProfile(session.user.id);
           }, 0);
         } else {
+          setUser(null);
           setProfile(null);
         }
         

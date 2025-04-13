@@ -65,16 +65,18 @@ export interface ComplianceScore {
   created_by: string;
 }
 
+// Updated User interface to match Supabase's User type
 export interface User {
   id: string;
-  email: string;
+  email?: string; // Make email optional to match Supabase's type
   profile?: Profile;
 }
 
+// Updated Session interface to match Supabase's Session type
 export interface Session {
   access_token: string;
   refresh_token: string;
   expires_in: number;
   token_type: string;
-  user: User;
+  user?: User; // Make user optional to match Supabase's type
 }

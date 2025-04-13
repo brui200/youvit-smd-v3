@@ -13,8 +13,13 @@ import { ChevronRight, MapPin, CheckCircle } from 'lucide-react';
 import { StoreVisit, Store, StorePOSM } from '@/types';
 import { useNavigate } from 'react-router-dom';
 
+type StoreVisitWithJoins = StoreVisit & { 
+  store: Store;
+  store_posms: StorePOSM[] | null; // Can be null if there are no POSMs
+};
+
 const MerchandiserHome = () => {
-  const [todayVisits, setTodayVisits] = useState<(StoreVisit & { store: Store, store_posms: StorePOSM[] })[]>([]);
+  const [todayVisits, setTodayVisits] = useState<StoreVisitWithJoins[]>([]);
   const [loading, setLoading] = useState(true);
   const [progress, setProgress] = useState(0);
   const { user } = useAuth();
@@ -40,12 +45,14 @@ const MerchandiserHome = () => {
 
         if (error) throw error;
 
-        setTodayVisits(data || []);
+        // Convert data with proper type casting
+        const typedData = (data || []) as StoreVisitWithJoins[];
+        setTodayVisits(typedData);
         
         // Calculate progress
-        if (data && data.length > 0) {
-          const completed = data.filter(visit => visit.completed_at).length;
-          setProgress(Math.round((completed / data.length) * 100));
+        if (typedData.length > 0) {
+          const completed = typedData.filter(visit => visit.completed_at).length;
+          setProgress(Math.round((completed / typedData.length) * 100));
         }
       } catch (error: any) {
         console.error('Error fetching visits:', error);
