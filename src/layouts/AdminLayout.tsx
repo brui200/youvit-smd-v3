@@ -29,7 +29,7 @@ const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
           </div>
         </div>
         <div className="mx-auto max-w-7xl px-4 py-2 sm:px-6 lg:px-8">
-          <nav className="flex space-x-4">
+          <nav className="flex space-x-4 overflow-x-auto pb-2">
             <Button variant="ghost" onClick={() => navigate('/admin')}>
               Dashboard
             </Button>
@@ -44,6 +44,9 @@ const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
             </Button>
             <Button variant="ghost" onClick={() => navigate('/admin/upload')}>
               Data Upload
+            </Button>
+            <Button variant="ghost" onClick={() => navigate('/admin/populate')}>
+              Populate Data
             </Button>
           </nav>
         </div>

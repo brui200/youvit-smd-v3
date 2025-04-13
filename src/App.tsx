@@ -10,11 +10,13 @@ import AdminRoute from "@/components/AdminRoute";
 
 // Auth Pages
 import Auth from "./pages/Auth";
+import Index from "./pages/Index";
 
 // Admin Pages
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import DataUpload from "./pages/admin/DataUpload";
 import Stores from "./pages/admin/Stores";
+import PopulateData from "./pages/admin/PopulateData";
 
 // Merchandiser Pages
 import MerchandiserHome from "./pages/merchandiser/MerchandiserHome";
@@ -24,78 +26,75 @@ import Profile from "./pages/merchandiser/Profile";
 
 // Shared
 import NotFound from "./pages/NotFound";
-import { useAuth } from "@/context/AuthContext";
 
 const queryClient = new QueryClient();
 
-const AppRoutes = () => {
-  const { profile, isLoading } = useAuth();
-  
-  if (isLoading) {
-    return <div className="flex h-screen items-center justify-center">Loading...</div>;
-  }
-
+const App = () => {
   return (
-    <Routes>
-      <Route path="/auth" element={<Auth />} />
-      
-      {/* Admin Routes */}
-      <Route path="/admin" element={
-        <AdminRoute>
-          <AdminDashboard />
-        </AdminRoute>
-      } />
-      <Route path="/admin/upload" element={
-        <AdminRoute>
-          <DataUpload />
-        </AdminRoute>
-      } />
-      <Route path="/admin/stores" element={
-        <AdminRoute>
-          <Stores />
-        </AdminRoute>
-      } />
-      
-      {/* Merchandiser Routes */}
-      <Route path="/" element={
-        <ProtectedRoute>
-          {profile?.role === 'admin' ? <Navigate to="/admin" replace /> : <MerchandiserHome />}
-        </ProtectedRoute>
-      } />
-      <Route path="/visit/:visitId" element={
-        <ProtectedRoute>
-          <StoreVisit />
-        </ProtectedRoute>
-      } />
-      <Route path="/map" element={
-        <ProtectedRoute>
-          <Map />
-        </ProtectedRoute>
-      } />
-      <Route path="/profile" element={
-        <ProtectedRoute>
-          <Profile />
-        </ProtectedRoute>
-      } />
-      
-      {/* Catch-all route */}
-      <Route path="*" element={<NotFound />} />
-    </Routes>
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <Routes>
+              {/* Index route for initial redirection */}
+              <Route path="/" element={<Index />} />
+              
+              <Route path="/auth" element={<Auth />} />
+              
+              {/* Admin Routes */}
+              <Route path="/admin" element={
+                <AdminRoute>
+                  <AdminDashboard />
+                </AdminRoute>
+              } />
+              <Route path="/admin/upload" element={
+                <AdminRoute>
+                  <DataUpload />
+                </AdminRoute>
+              } />
+              <Route path="/admin/stores" element={
+                <AdminRoute>
+                  <Stores />
+                </AdminRoute>
+              } />
+              <Route path="/admin/populate" element={
+                <AdminRoute>
+                  <PopulateData />
+                </AdminRoute>
+              } />
+              
+              {/* Merchandiser Routes */}
+              <Route path="/merchandiser" element={
+                <ProtectedRoute>
+                  <MerchandiserHome />
+                </ProtectedRoute>
+              } />
+              <Route path="/visit/:visitId" element={
+                <ProtectedRoute>
+                  <StoreVisit />
+                </ProtectedRoute>
+              } />
+              <Route path="/map" element={
+                <ProtectedRoute>
+                  <Map />
+                </ProtectedRoute>
+              } />
+              <Route path="/profile" element={
+                <ProtectedRoute>
+                  <Profile />
+                </ProtectedRoute>
+              } />
+              
+              {/* Catch-all route */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </BrowserRouter>
+        </TooltipProvider>
+      </AuthProvider>
+    </QueryClientProvider>
   );
 };
-
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <AuthProvider>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <AppRoutes />
-        </BrowserRouter>
-      </TooltipProvider>
-    </AuthProvider>
-  </QueryClientProvider>
-);
 
 export default App;

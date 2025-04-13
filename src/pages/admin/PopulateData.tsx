@@ -1,0 +1,91 @@
+
+import { useState } from 'react';
+import AdminLayout from '@/layouts/AdminLayout';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { useToast } from '@/hooks/use-toast';
+import { populateJakartaStores } from '@/utils/populateStores';
+
+const PopulateData = () => {
+  const [isLoading, setIsLoading] = useState(false);
+  const [storeCount, setStoreCount] = useState(200);
+  const { toast } = useToast();
+
+  const handlePopulateStores = async () => {
+    setIsLoading(true);
+    try {
+      const result = await populateJakartaStores(storeCount);
+      
+      if (result.success) {
+        toast({
+          title: 'Success!',
+          description: `Successfully added ${result.count} stores to the database.`,
+        });
+      } else {
+        toast({
+          title: 'Error',
+          description: 'Failed to populate stores. Check console for details.',
+          variant: 'destructive',
+        });
+      }
+    } catch (error) {
+      console.error('Error populating stores:', error);
+      toast({
+        title: 'Error',
+        description: 'An unexpected error occurred.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <AdminLayout>
+      <div className="space-y-6">
+        <h1 className="text-2xl font-bold">Populate Test Data</h1>
+        
+        <Card>
+          <CardHeader>
+            <CardTitle>Populate Jakarta Stores</CardTitle>
+            <CardDescription>
+              Generate random store data located in Jakarta for testing purposes.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="store-count">Number of Stores</Label>
+                <Input 
+                  id="store-count"
+                  type="number"
+                  value={storeCount}
+                  onChange={(e) => setStoreCount(parseInt(e.target.value) || 0)}
+                  min={1}
+                  max={500}
+                />
+              </div>
+              <p className="text-sm text-muted-foreground">
+                This will generate random Jakarta-based stores with realistic names, addresses, 
+                and coordinates. The operation may take some time.
+              </p>
+            </div>
+          </CardContent>
+          <CardFooter>
+            <Button 
+              onClick={handlePopulateStores} 
+              disabled={isLoading || storeCount <= 0}
+              className="w-full"
+            >
+              {isLoading ? 'Generating Stores...' : `Generate ${storeCount} Stores`}
+            </Button>
+          </CardFooter>
+        </Card>
+      </div>
+    </AdminLayout>
+  );
+};
+
+export default PopulateData;

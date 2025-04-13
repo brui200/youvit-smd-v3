@@ -21,6 +21,10 @@ const Index = () => {
     }
   }, [user, profile, isLoading, navigate]);
 
+  // Add console logging to help debug
+  console.log('Current user:', user);
+  console.log('Current profile:', profile);
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
       <div className="text-center">
