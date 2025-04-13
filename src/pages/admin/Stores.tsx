@@ -19,18 +19,24 @@ const Stores = () => {
   useEffect(() => {
     const fetchStores = async () => {
       try {
+        console.log('Fetching stores...');
         const { data, error } = await supabase
           .from('stores')
           .select('*')
           .order('name');
 
-        if (error) throw error;
+        if (error) {
+          console.error('Error fetching stores:', error);
+          throw error;
+        }
+        
+        console.log('Stores fetched:', data);
         setStores(data || []);
       } catch (error: any) {
         console.error('Error fetching stores:', error);
         toast({
           title: 'Error',
-          description: 'Failed to load stores',
+          description: 'Failed to load stores: ' + error.message,
           variant: 'destructive',
         });
       } finally {
@@ -56,7 +62,7 @@ const Stores = () => {
 
         <Card>
           <CardHeader>
-            <CardTitle>Store List</CardTitle>
+            <CardTitle>Store List ({stores.length} stores)</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="mb-4">
@@ -92,7 +98,7 @@ const Stores = () => {
                       <TableRow key={store.id}>
                         <TableCell className="font-medium">{store.name}</TableCell>
                         <TableCell>{store.address}</TableCell>
-                        <TableCell>{formatCurrency(store.monthly_revenue)}</TableCell>
+                        <TableCell>{formatCurrency(store.monthly_revenue || 0)}</TableCell>
                         <TableCell>
                           <Button variant="outline" size="sm">View</Button>
                         </TableCell>

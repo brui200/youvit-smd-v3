@@ -94,7 +94,7 @@ export const populateJakartaStores = async (count: number = 200) => {
     for (const store of stores) {
       try {
         // Use RPC function call which bypasses RLS
-        const { data, error } = await supabase.rpc<boolean>('insert_store', {
+        const { data, error } = await supabase.rpc('insert_store', {
           store_name: store.name,
           store_address: store.address,
           store_latitude: store.latitude,
