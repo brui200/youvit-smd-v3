@@ -9,27 +9,29 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Store } from '@/types';
 import { formatCurrency } from '@/utils/format';
-import { Store as LucideStore } from 'lucide-react';
+import { Store as LucideStore, AlertCircle } from 'lucide-react';
 
 const Stores = () => {
   const [stores, setStores] = useState<Store[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
     const fetchStores = async () => {
       try {
-        console.log('Fetching stores...');
+        console.log('Fetching stores from admin page...');
+        setError(null);
         
-        // Use a direct query with a specific role to bypass RLS
+        // Use the rpc function to bypass RLS
         const { data, error } = await supabase
-          .from('stores')
-          .select('*')
+          .rpc('get_all_stores')
           .order('name');
-
+          
         if (error) {
           console.error('Error fetching stores:', error);
+          setError(error.message);
           throw error;
         }
         
@@ -37,6 +39,7 @@ const Stores = () => {
         setStores(data || []);
       } catch (error: any) {
         console.error('Error fetching stores:', error);
+        setError(error.message);
         toast({
           title: 'Error',
           description: 'Failed to load stores: ' + error.message,
@@ -83,6 +86,12 @@ const Stores = () => {
               <div className="text-center py-4">
                 <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-current border-r-transparent"></div>
                 <p className="mt-2">Loading stores...</p>
+              </div>
+            ) : error ? (
+              <div className="text-center py-4 text-red-500 flex flex-col items-center">
+                <AlertCircle className="h-8 w-8 mb-2" />
+                <p>Error loading stores: {error}</p>
+                <p className="text-sm mt-2">Please check the database connection or permissions.</p>
               </div>
             ) : filteredStores.length === 0 ? (
               <div className="text-center py-4">

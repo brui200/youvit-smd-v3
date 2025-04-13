@@ -9,18 +9,19 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/componen
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { ChevronRight, MapPin, CheckCircle } from 'lucide-react';
-import { StoreVisit, Store, StorePOSM } from '@/types';
+import { ChevronRight, MapPin, CheckCircle, AlertCircle } from 'lucide-react';
+import { StoreVisit, Store } from '@/types';
 import { useNavigate } from 'react-router-dom';
 
-type StoreVisitWithJoins = StoreVisit & { 
+// Modified type to avoid the relationship error
+type StoreVisitWithStore = StoreVisit & { 
   store: Store;
-  store_posms: StorePOSM[] | null; // Can be null if there are no POSMs
 };
 
 const MerchandiserHome = () => {
-  const [todayVisits, setTodayVisits] = useState<StoreVisitWithJoins[]>([]);
+  const [todayVisits, setTodayVisits] = useState<StoreVisitWithStore[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [progress, setProgress] = useState(0);
   const { user } = useAuth();
   const { toast } = useToast();
@@ -32,44 +33,62 @@ const MerchandiserHome = () => {
       if (!user) return;
 
       try {
-        const { data, error } = await supabase
+        setError(null);
+        console.log('Fetching visits for merchandiser:', user.id);
+        
+        // First fetch the visits with stores, avoiding the store_posms relationship
+        const { data: visitsData, error: visitsError } = await supabase
           .from('store_visits')
           .select(`
             *,
-            store:stores(*),
-            store_posms:store_posms(*)
+            store:stores(*)
           `)
           .eq('merchandiser_id', user.id)
           .eq('scheduled_date', today)
           .order('visit_order', { ascending: true });
 
-        if (error) throw error;
-
-        // Safe type conversion with explicit checking for array structure
-        const typedData: StoreVisitWithJoins[] = [];
-        
-        if (data && Array.isArray(data)) {
-          data.forEach((item: any) => {
-            // Ensure store_posms is an array or null
-            const safeStorePosms = Array.isArray(item.store_posms) ? item.store_posms : null;
-            
-            // Create a properly typed visit object
-            typedData.push({
-              ...item,
-              store_posms: safeStorePosms
-            });
-          });
+        if (visitsError) {
+          console.error('Error fetching visits:', visitsError);
+          setError(visitsError.message);
+          throw visitsError;
         }
+
+        if (!visitsData || visitsData.length === 0) {
+          console.log('No visits found for today');
+          setTodayVisits([]);
+          setLoading(false);
+          return;
+        }
+
+        console.log('Visits fetched successfully:', visitsData);
         
-        setTodayVisits(typedData);
+        // For each visit, fetch the POSMs separately to avoid the relationship error
+        const visitsWithAll = await Promise.all(
+          visitsData.map(async (visit) => {
+            // Fetch POSMs for this store
+            const { data: posmsData } = await supabase
+              .from('store_posms')
+              .select('*')
+              .eq('store_id', visit.store_id);
+              
+            return {
+              ...visit,
+              store_posms: posmsData || []
+            };
+          })
+        );
+        
+        // Type casting to match what the component expects
+        setTodayVisits(visitsWithAll as StoreVisitWithStore[]);
         
         // Calculate progress
-        if (typedData.length > 0) {
-          const completed = typedData.filter(visit => visit.completed_at).length;
-          setProgress(Math.round((completed / typedData.length) * 100));
+        if (visitsWithAll.length > 0) {
+          const completed = visitsWithAll.filter(visit => visit.completed_at).length;
+          setProgress(Math.round((completed / visitsWithAll.length) * 100));
         }
       } catch (error: any) {
-        console.error('Error fetching visits:', error);
+        console.error('Error in visit fetching process:', error);
+        setError(error.message);
         toast({
           title: 'Failed to load visits',
           description: error.message,
@@ -113,6 +132,19 @@ const MerchandiserHome = () => {
               <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-current border-r-transparent"></div>
               <p className="mt-2">Loading your visits...</p>
             </div>
+          </div>
+        ) : error ? (
+          <div className="text-center py-8 text-red-500 flex flex-col items-center">
+            <AlertCircle className="h-8 w-8 mb-2" />
+            <p className="text-lg font-medium">Error loading visits</p>
+            <p className="text-sm mt-1">{error}</p>
+            <Button 
+              variant="outline" 
+              className="mt-4"
+              onClick={() => window.location.reload()}
+            >
+              Try Again
+            </Button>
           </div>
         ) : todayVisits.length === 0 ? (
           <div className="text-center py-8">
