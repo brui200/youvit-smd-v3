@@ -16,6 +16,7 @@ import Index from "./pages/Index";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import DataUpload from "./pages/admin/DataUpload";
 import Stores from "./pages/admin/Stores";
+import Merchandisers from "./pages/admin/Merchandisers";
 
 // Merchandiser Pages
 import MerchandiserHome from "./pages/merchandiser/MerchandiserHome";
@@ -60,7 +61,7 @@ const App = () => {
               } />
               <Route path="/admin/merchandisers" element={
                 <AdminRoute>
-                  <div>Merchandisers Management</div>
+                  <Merchandisers />
                 </AdminRoute>
               } />
               <Route path="/admin/visits" element={
