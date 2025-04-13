@@ -45,8 +45,22 @@ const MerchandiserHome = () => {
 
         if (error) throw error;
 
-        // Convert data with proper type casting
-        const typedData = (data || []) as StoreVisitWithJoins[];
+        // Safe type conversion with explicit checking for array structure
+        const typedData: StoreVisitWithJoins[] = [];
+        
+        if (data && Array.isArray(data)) {
+          data.forEach((item: any) => {
+            // Ensure store_posms is an array or null
+            const safeStorePosms = Array.isArray(item.store_posms) ? item.store_posms : null;
+            
+            // Create a properly typed visit object
+            typedData.push({
+              ...item,
+              store_posms: safeStorePosms
+            });
+          });
+        }
+        
         setTodayVisits(typedData);
         
         // Calculate progress
