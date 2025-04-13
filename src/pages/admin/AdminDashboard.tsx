@@ -5,6 +5,15 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/context/AuthContext';
+import { Json } from '@/integrations/supabase/types';
+
+// Define an interface for the dashboard counts
+interface DashboardCounts {
+  store_count: number;
+  merchandiser_count: number;
+  completed_visits_count: number;
+  pending_visits_count: number;
+}
 
 const AdminDashboard = () => {
   const [storeCount, setStoreCount] = useState<number>(0);
@@ -40,10 +49,13 @@ const AdminDashboard = () => {
         console.log('Dashboard counts:', countsData);
         
         if (countsData) {
-          setStoreCount(countsData.store_count || 0);
-          setMerchandiserCount(countsData.merchandiser_count || 0);
-          setCompletedVisitsCount(countsData.completed_visits_count || 0);
-          setPendingVisitsCount(countsData.pending_visits_count || 0);
+          // Cast the JSON data to our DashboardCounts interface
+          const typedCountsData = countsData as unknown as DashboardCounts;
+          
+          setStoreCount(typedCountsData.store_count || 0);
+          setMerchandiserCount(typedCountsData.merchandiser_count || 0);
+          setCompletedVisitsCount(typedCountsData.completed_visits_count || 0);
+          setPendingVisitsCount(typedCountsData.pending_visits_count || 0);
         }
       } catch (error: any) {
         console.error('Error fetching dashboard data:', error);
