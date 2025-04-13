@@ -7,15 +7,25 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { populateJakartaStores } from '@/utils/populateStores';
+import { Progress } from '@/components/ui/progress';
 
 const PopulateData = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [storeCount, setStoreCount] = useState(200);
+  const [progress, setProgress] = useState(0);
   const { toast } = useToast();
 
   const handlePopulateStores = async () => {
     setIsLoading(true);
+    setProgress(0);
+    
     try {
+      // Show initial toast
+      toast({
+        title: 'Starting data population',
+        description: `This may take a moment. Adding ${storeCount} stores...`,
+      });
+      
       const result = await populateJakartaStores(storeCount);
       
       if (result.success) {
@@ -39,6 +49,7 @@ const PopulateData = () => {
       });
     } finally {
       setIsLoading(false);
+      setProgress(100);
     }
   };
 
@@ -67,6 +78,14 @@ const PopulateData = () => {
                   max={500}
                 />
               </div>
+              
+              {isLoading && (
+                <div className="space-y-2">
+                  <p className="text-sm text-muted-foreground">Adding stores...</p>
+                  <Progress value={progress} className="h-2" />
+                </div>
+              )}
+              
               <p className="text-sm text-muted-foreground">
                 This will generate random Jakarta-based stores with realistic names, addresses, 
                 and coordinates. The operation may take some time.

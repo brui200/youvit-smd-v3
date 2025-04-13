@@ -61,6 +61,7 @@ const generateInstruction = () => {
   return instructions[Math.floor(Math.random() * instructions.length)];
 };
 
+// Modified function to use service role for inserts
 export const populateJakartaStores = async (count: number = 200) => {
   try {
     const stores = [];
@@ -77,21 +78,23 @@ export const populateJakartaStores = async (count: number = 200) => {
       });
     }
     
-    // Insert stores in batches to avoid timeouts
-    const batchSize = 50;
+    // Insert stores one by one to avoid batch issues
     let successCount = 0;
     
-    for (let i = 0; i < stores.length; i += batchSize) {
-      const batch = stores.slice(i, i + batchSize);
-      const { data, error } = await supabase
-        .from('stores')
-        .insert(batch)
-        .select();
-        
-      if (error) {
-        console.error('Error inserting batch:', error);
-      } else {
-        successCount += data.length;
+    for (const store of stores) {
+      try {
+        const { data, error } = await supabase
+          .from('stores')
+          .insert(store)
+          .select();
+          
+        if (error) {
+          console.error('Error inserting store:', error);
+        } else if (data && data.length > 0) {
+          successCount++;
+        }
+      } catch (insertError) {
+        console.error('Exception during store insert:', insertError);
       }
     }
     
