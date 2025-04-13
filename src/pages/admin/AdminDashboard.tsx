@@ -18,7 +18,12 @@ const AdminDashboard = () => {
       try {
         console.log('Fetching dashboard data...');
         
-        // Fetch store count - Modified to use simpler query approach
+        // Add debug information to see current auth state
+        const { data: { user } } = await supabase.auth.getUser();
+        console.log('Current user:', user);
+        
+        // Fetch store count with full error logging
+        console.log('Fetching stores...');
         const { data: storesData, error: storesError } = await supabase
           .from('stores')
           .select('id');
@@ -31,10 +36,11 @@ const AdminDashboard = () => {
         console.log('Stores data:', storesData);
         setStoreCount(storesData?.length || 0);
 
-        // Fetch merchandiser count
+        // Fetch merchandiser count with full error logging
+        console.log('Fetching merchandisers...');
         const { data: merchandisers, error: merchandisersError } = await supabase
           .from('profiles')
-          .select('*')
+          .select('id')
           .eq('role', 'merchandiser');
 
         if (merchandisersError) {
@@ -45,7 +51,8 @@ const AdminDashboard = () => {
         console.log('Merchandisers data:', merchandisers);
         setMerchandiserCount(merchandisers?.length || 0);
 
-        // Fetch completed visits count - Modified to use simpler query approach
+        // Fetch completed visits count with full error logging
+        console.log('Fetching completed visits...');
         const { data: completedData, error: completedError } = await supabase
           .from('store_visits')
           .select('id')
@@ -59,7 +66,8 @@ const AdminDashboard = () => {
         console.log('Completed visits data:', completedData);
         setCompletedVisitsCount(completedData?.length || 0);
 
-        // Fetch pending visits count - Modified to use simpler query approach
+        // Fetch pending visits count with full error logging
+        console.log('Fetching pending visits...');
         const { data: pendingData, error: pendingError } = await supabase
           .from('store_visits')
           .select('id')
