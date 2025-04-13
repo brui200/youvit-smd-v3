@@ -62,7 +62,10 @@ const Visits = () => {
       }
       
       console.log('Visits fetched:', data);
-      return data as ExtendedStoreVisit[];
+      
+      // Type assertion to ensure proper conversion
+      const typedData = data as unknown as ExtendedStoreVisit[];
+      return typedData;
     },
   });
 
@@ -220,7 +223,6 @@ const Visits = () => {
                         variant="outline"
                         size="sm"
                         onClick={() => {
-                          // TODO: Implement view details functionality
                           toast({
                             title: 'View Details',
                             description: 'This functionality is not implemented yet.',

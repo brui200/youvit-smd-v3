@@ -17,6 +17,7 @@ import AdminDashboard from "./pages/admin/AdminDashboard";
 import DataUpload from "./pages/admin/DataUpload";
 import Stores from "./pages/admin/Stores";
 import Merchandisers from "./pages/admin/Merchandisers";
+import Visits from "./pages/admin/Visits";
 
 // Merchandiser Pages
 import MerchandiserHome from "./pages/merchandiser/MerchandiserHome";
@@ -66,7 +67,7 @@ const App = () => {
               } />
               <Route path="/admin/visits" element={
                 <AdminRoute>
-                  <div>Visits Management</div>
+                  <Visits />
                 </AdminRoute>
               } />
               
