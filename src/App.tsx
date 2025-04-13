@@ -64,9 +64,24 @@ const App = () => {
                   <PopulateData />
                 </AdminRoute>
               } />
+              <Route path="/admin/merchandisers" element={
+                <AdminRoute>
+                  <div>Merchandisers Management</div>
+                </AdminRoute>
+              } />
+              <Route path="/admin/visits" element={
+                <AdminRoute>
+                  <div>Visits Management</div>
+                </AdminRoute>
+              } />
               
               {/* Merchandiser Routes */}
               <Route path="/merchandiser" element={
+                <ProtectedRoute>
+                  <MerchandiserHome />
+                </ProtectedRoute>
+              } />
+              <Route path="/visits" element={
                 <ProtectedRoute>
                   <MerchandiserHome />
                 </ProtectedRoute>

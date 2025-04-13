@@ -7,6 +7,11 @@ const Index = () => {
   const { user, profile, isLoading } = useAuth();
   const navigate = useNavigate();
 
+  // Add console logging to help debug
+  console.log('Current user:', user);
+  console.log('Current profile:', profile);
+  console.log('Is loading:', isLoading);
+
   useEffect(() => {
     if (isLoading) return;
 
@@ -14,16 +19,13 @@ const Index = () => {
       if (profile?.role === 'admin') {
         navigate('/admin');
       } else {
-        navigate('/');
+        // Redirect to merchandiser home if not admin
+        navigate('/merchandiser');
       }
     } else {
       navigate('/auth');
     }
   }, [user, profile, isLoading, navigate]);
-
-  // Add console logging to help debug
-  console.log('Current user:', user);
-  console.log('Current profile:', profile);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100">

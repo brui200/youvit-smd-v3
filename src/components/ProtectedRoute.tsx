@@ -10,6 +10,10 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   const { user, isLoading } = useAuth();
   const location = useLocation();
 
+  // Add console logging for debugging
+  console.log('ProtectedRoute - user:', user);
+  console.log('ProtectedRoute - isLoading:', isLoading);
+
   if (isLoading) {
     return <div className="flex h-screen items-center justify-center">Loading...</div>;
   }
