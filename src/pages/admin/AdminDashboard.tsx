@@ -4,6 +4,7 @@ import AdminLayout from '@/layouts/AdminLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/context/AuthContext';
 
 const AdminDashboard = () => {
   const [storeCount, setStoreCount] = useState<number>(0);
@@ -12,6 +13,7 @@ const AdminDashboard = () => {
   const [pendingVisitsCount, setPendingVisitsCount] = useState<number>(0);
   const [loading, setLoading] = useState<boolean>(true);
   const { toast } = useToast();
+  const { user } = useAuth();
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -19,68 +21,30 @@ const AdminDashboard = () => {
         console.log('Fetching dashboard data...');
         
         // Add debug information to see current auth state
-        const { data: { user } } = await supabase.auth.getUser();
         console.log('Current user:', user);
         
-        // Fetch store count with full error logging
-        console.log('Fetching stores...');
-        const { data: storesData, error: storesError } = await supabase
-          .from('stores')
-          .select('id');
-
-        if (storesError) {
-          console.error('Error fetching stores:', storesError);
-          throw storesError;
+        // Use stored functions to bypass RLS issues
+        const { data: countsData, error: countsError } = await supabase.rpc('get_admin_dashboard_counts');
+        
+        if (countsError) {
+          console.error('Error fetching dashboard counts:', countsError);
+          toast({
+            title: 'Error',
+            description: 'Failed to load dashboard data: ' + countsError.message,
+            variant: 'destructive',
+          });
+          setLoading(false);
+          return;
         }
         
-        console.log('Stores data:', storesData);
-        setStoreCount(storesData?.length || 0);
-
-        // Fetch merchandiser count with full error logging
-        console.log('Fetching merchandisers...');
-        const { data: merchandisers, error: merchandisersError } = await supabase
-          .from('profiles')
-          .select('id')
-          .eq('role', 'merchandiser');
-
-        if (merchandisersError) {
-          console.error('Error fetching merchandisers:', merchandisersError);
-          throw merchandisersError;
-        }
+        console.log('Dashboard counts:', countsData);
         
-        console.log('Merchandisers data:', merchandisers);
-        setMerchandiserCount(merchandisers?.length || 0);
-
-        // Fetch completed visits count with full error logging
-        console.log('Fetching completed visits...');
-        const { data: completedData, error: completedError } = await supabase
-          .from('store_visits')
-          .select('id')
-          .not('completed_at', 'is', null);
-
-        if (completedError) {
-          console.error('Error fetching completed visits:', completedError);
-          throw completedError;
+        if (countsData) {
+          setStoreCount(countsData.store_count || 0);
+          setMerchandiserCount(countsData.merchandiser_count || 0);
+          setCompletedVisitsCount(countsData.completed_visits_count || 0);
+          setPendingVisitsCount(countsData.pending_visits_count || 0);
         }
-        
-        console.log('Completed visits data:', completedData);
-        setCompletedVisitsCount(completedData?.length || 0);
-
-        // Fetch pending visits count with full error logging
-        console.log('Fetching pending visits...');
-        const { data: pendingData, error: pendingError } = await supabase
-          .from('store_visits')
-          .select('id')
-          .is('completed_at', null);
-
-        if (pendingError) {
-          console.error('Error fetching pending visits:', pendingError);
-          throw pendingError;
-        }
-        
-        console.log('Pending visits data:', pendingData);
-        setPendingVisitsCount(pendingData?.length || 0);
-
       } catch (error: any) {
         console.error('Error fetching dashboard data:', error);
         toast({
@@ -94,7 +58,7 @@ const AdminDashboard = () => {
     };
 
     fetchDashboardData();
-  }, [toast]);
+  }, [toast, user]);
 
   return (
     <AdminLayout>
