@@ -37,6 +37,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     const fetchUserProfile = async (userId: string) => {
       try {
+        console.log('Fetching profile for user:', userId);
+        
         const { data, error } = await supabase
           .from('profiles')
           .select('*')
@@ -48,43 +50,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           return;
         }
 
+        console.log('Profile fetched:', data);
         setProfile(data);
       } catch (error) {
         console.error('Error fetching profile:', error);
       }
     };
 
-    // Check for active session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      // Convert Supabase session to our session type for state
-      setSession(session);
-      if (session?.user) {
-        const userWithEmail: User = {
-          id: session.user.id,
-          email: session.user.email || undefined
-        };
-        setUser(userWithEmail);
-        fetchUserProfile(session.user.id);
-      } else {
-        setUser(null);
-      }
-      
-      setIsLoading(false);
-    });
-
-    // Listen for auth changes
+    // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
-        setSession(session);
-        if (session?.user) {
+      (event, newSession) => {
+        console.log('Auth state changed, event:', event);
+        setSession(newSession);
+        
+        if (newSession?.user) {
           const userWithEmail: User = {
-            id: session.user.id,
-            email: session.user.email || undefined
+            id: newSession.user.id,
+            email: newSession.user.email || undefined
           };
           setUser(userWithEmail);
           
           setTimeout(() => {
-            fetchUserProfile(session.user.id);
+            fetchUserProfile(newSession.user.id);
           }, 0);
         } else {
           setUser(null);
@@ -94,6 +81,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setIsLoading(false);
       }
     );
+
+    // THEN check for existing session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      console.log('Existing session checked:', session ? 'Found session' : 'No session');
+      setSession(session);
+      
+      if (session?.user) {
+        const userWithEmail: User = {
+          id: session.user.id,
+          email: session.user.email || undefined
+        };
+        setUser(userWithEmail);
+        fetchUserProfile(session.user.id);
+      } else {
+        setUser(null);
+        setProfile(null);
+      }
+      
+      setIsLoading(false);
+    });
 
     return () => {
       subscription.unsubscribe();

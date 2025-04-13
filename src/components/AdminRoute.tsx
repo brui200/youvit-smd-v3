@@ -1,3 +1,4 @@
+
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 
@@ -13,28 +14,29 @@ const AdminRoute: React.FC<AdminRouteProps> = ({ children }) => {
   console.log('AdminRoute - user:', user);
   console.log('AdminRoute - profile:', profile);
   console.log('AdminRoute - isLoading:', isLoading);
+  console.log('AdminRoute - profile role:', profile?.role);
 
   if (isLoading) {
     return <div className="flex h-screen items-center justify-center">Loading...</div>;
   }
 
-  // If user exists but profile is null (due to Supabase error), we'll make a best guess based on URL
-  // This is a fallback to prevent infinite loading
+  // If no user, redirect to auth
+  if (!user) {
+    return <Navigate to="/auth" state={{ from: location }} replace />;
+  }
+
+  // If user exists but profile hasn't loaded yet, show loading
   if (user && !profile) {
-    if (location.pathname.startsWith('/admin')) {
-      // If they're trying to access admin pages, we'll assume they're admin for now
-      return <>{children}</>;
-    } else {
-      // Otherwise redirect to merchandiser page
-      return <Navigate to="/merchandiser" state={{ from: location }} replace />;
-    }
+    return <div className="flex h-screen items-center justify-center">Loading profile data...</div>;
   }
 
-  // Normal flow - check if user is admin
-  if (!profile?.role || profile.role !== 'admin') {
-    return <Navigate to="/" state={{ from: location }} replace />;
+  // Check if user is admin
+  if (profile?.role !== 'admin') {
+    console.log('User is not admin, redirecting to /merchandiser');
+    return <Navigate to="/merchandiser" state={{ from: location }} replace />;
   }
 
+  console.log('User is admin, rendering admin route');
   return <>{children}</>;
 };
 

@@ -11,16 +11,25 @@ const Index = () => {
   console.log('Current user:', user);
   console.log('Current profile:', profile);
   console.log('Is loading:', isLoading);
+  console.log('User role:', profile?.role);
 
   useEffect(() => {
     if (isLoading) return;
 
     if (user) {
-      if (profile?.role === 'admin') {
-        navigate('/admin');
+      // Make sure we have a profile before checking the role
+      if (profile) {
+        if (profile.role === 'admin') {
+          console.log('Redirecting to admin dashboard');
+          navigate('/admin');
+        } else {
+          console.log('Redirecting to merchandiser home');
+          navigate('/merchandiser');
+        }
       } else {
-        // Redirect to merchandiser home if not admin
-        navigate('/merchandiser');
+        console.log('Profile is null, waiting for profile data');
+        // If we have a user but no profile yet, we'll wait for the profile
+        // The AuthContext will fetch the profile
       }
     } else {
       navigate('/auth');
