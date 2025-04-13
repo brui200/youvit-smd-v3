@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import AdminLayout from '@/layouts/AdminLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -8,16 +8,20 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { populateJakartaStores } from '@/utils/populateStores';
 import { Progress } from '@/components/ui/progress';
+import { AlertCircle } from 'lucide-react';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 const PopulateData = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [storeCount, setStoreCount] = useState(200);
   const [progress, setProgress] = useState(0);
+  const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
   const handlePopulateStores = async () => {
     setIsLoading(true);
     setProgress(0);
+    setError(null);
     
     try {
       // Show initial toast
@@ -26,14 +30,30 @@ const PopulateData = () => {
         description: `This may take a moment. Adding ${storeCount} stores...`,
       });
       
+      // Start progress animation
+      const progressInterval = setInterval(() => {
+        setProgress(prev => {
+          if (prev >= 95) {
+            clearInterval(progressInterval);
+            return prev;
+          }
+          return prev + 5;
+        });
+      }, 1000);
+      
       const result = await populateJakartaStores(storeCount);
       
+      clearInterval(progressInterval);
+      
       if (result.success) {
+        setProgress(100);
         toast({
           title: 'Success!',
           description: `Successfully added ${result.count} stores to the database.`,
         });
       } else {
+        setProgress(0);
+        setError('Failed to populate stores. Check console for details.');
         toast({
           title: 'Error',
           description: 'Failed to populate stores. Check console for details.',
@@ -42,6 +62,7 @@ const PopulateData = () => {
       }
     } catch (error) {
       console.error('Error populating stores:', error);
+      setError('An unexpected error occurred. Check console for details.');
       toast({
         title: 'Error',
         description: 'An unexpected error occurred.',
@@ -49,7 +70,6 @@ const PopulateData = () => {
       });
     } finally {
       setIsLoading(false);
-      setProgress(100);
     }
   };
 
@@ -84,6 +104,16 @@ const PopulateData = () => {
                   <p className="text-sm text-muted-foreground">Adding stores...</p>
                   <Progress value={progress} className="h-2" />
                 </div>
+              )}
+              
+              {error && (
+                <Alert variant="destructive">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertTitle>Error</AlertTitle>
+                  <AlertDescription>
+                    {error}
+                  </AlertDescription>
+                </Alert>
               )}
               
               <p className="text-sm text-muted-foreground">
