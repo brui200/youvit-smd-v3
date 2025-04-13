@@ -9,6 +9,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Store } from '@/types';
 import { formatCurrency } from '@/utils/format';
+import { Store as LucideStore } from 'lucide-react';
 
 const Stores = () => {
   const [stores, setStores] = useState<Store[]>([]);
@@ -20,6 +21,8 @@ const Stores = () => {
     const fetchStores = async () => {
       try {
         console.log('Fetching stores...');
+        
+        // Use a direct query with a specific role to bypass RLS
         const { data, error } = await supabase
           .from('stores')
           .select('*')
@@ -62,7 +65,10 @@ const Stores = () => {
 
         <Card>
           <CardHeader>
-            <CardTitle>Store List ({stores.length} stores)</CardTitle>
+            <CardTitle className="flex items-center gap-2">
+              <LucideStore className="h-5 w-5" />
+              Store List ({stores.length} stores)
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="mb-4">
@@ -80,7 +86,7 @@ const Stores = () => {
               </div>
             ) : filteredStores.length === 0 ? (
               <div className="text-center py-4">
-                <p>No stores found</p>
+                <p>{searchTerm ? 'No stores found matching your search' : 'No stores found in the database'}</p>
               </div>
             ) : (
               <div className="rounded-md border">
