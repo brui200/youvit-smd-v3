@@ -220,6 +220,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_admin_dashboard_counts: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
       insert_store: {
         Args: {
           store_name: string
