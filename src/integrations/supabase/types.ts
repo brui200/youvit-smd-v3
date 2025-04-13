@@ -224,6 +224,20 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: Json
       }
+      get_all_stores: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          address: string
+          created_at: string
+          id: string
+          instructions: string | null
+          latitude: number
+          longitude: number
+          monthly_revenue: number | null
+          name: string
+          updated_at: string
+        }[]
+      }
       insert_store: {
         Args: {
           store_name: string

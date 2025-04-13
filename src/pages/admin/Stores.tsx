@@ -24,10 +24,7 @@ const Stores = () => {
         console.log('Fetching stores from admin page...');
         setError(null);
         
-        // Use the rpc function to bypass RLS
-        const { data, error } = await supabase
-          .rpc('get_all_stores')
-          .order('name');
+        const { data, error } = await supabase.rpc('get_all_stores');
           
         if (error) {
           console.error('Error fetching stores:', error);
@@ -37,12 +34,12 @@ const Stores = () => {
         
         console.log('Stores fetched:', data);
         setStores(data || []);
-      } catch (error: any) {
-        console.error('Error fetching stores:', error);
-        setError(error.message);
+      } catch (err: any) {
+        console.error('Error fetching stores:', err);
+        setError(err.message);
         toast({
           title: 'Error',
-          description: 'Failed to load stores: ' + error.message,
+          description: 'Failed to load stores: ' + err.message,
           variant: 'destructive',
         });
       } finally {
