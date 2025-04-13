@@ -220,7 +220,17 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      insert_store: {
+        Args: {
+          store_name: string
+          store_address: string
+          store_latitude: number
+          store_longitude: number
+          store_revenue: number
+          store_instructions: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
       posm_type: "COC" | "hangsell" | "standee"

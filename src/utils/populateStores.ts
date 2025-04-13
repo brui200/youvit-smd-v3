@@ -61,6 +61,16 @@ const generateInstruction = () => {
   return instructions[Math.floor(Math.random() * instructions.length)];
 };
 
+// Define interface for the insert_store RPC function parameters
+interface InsertStoreParams {
+  store_name: string;
+  store_address: string;
+  store_latitude: number;
+  store_longitude: number;
+  store_revenue: number;
+  store_instructions: string | null;
+}
+
 // Modified function to bypass policy issues
 export const populateJakartaStores = async (count: number = 200) => {
   try {
@@ -85,14 +95,14 @@ export const populateJakartaStores = async (count: number = 200) => {
     for (const store of stores) {
       try {
         // Use RPC function call which bypasses RLS
-        const { data, error } = await supabase.rpc('insert_store', {
+        const { data, error } = await supabase.rpc<boolean>('insert_store', {
           store_name: store.name,
           store_address: store.address,
           store_latitude: store.latitude,
           store_longitude: store.longitude,
           store_revenue: store.monthly_revenue,
           store_instructions: store.instructions
-        });
+        } as InsertStoreParams);
         
         if (error) {
           console.error('Error inserting store:', error);
