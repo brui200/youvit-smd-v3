@@ -9,7 +9,212 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      compliance_scores: {
+        Row: {
+          created_at: string
+          created_by: string
+          id: string
+          notes: string | null
+          score: number
+          store_visit_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          id?: string
+          notes?: string | null
+          score: number
+          store_visit_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          id?: string
+          notes?: string | null
+          score?: number
+          store_visit_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "compliance_scores_store_visit_id_fkey"
+            columns: ["store_visit_id"]
+            isOneToOne: false
+            referencedRelation: "store_visits"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      planograms: {
+        Row: {
+          created_at: string
+          id: string
+          image_url: string
+          store_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          image_url: string
+          store_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          image_url?: string
+          store_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "planograms_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          phone: string | null
+          role: Database["public"]["Enums"]["user_role"]
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id: string
+          name: string
+          phone?: string | null
+          role?: Database["public"]["Enums"]["user_role"]
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          phone?: string | null
+          role?: Database["public"]["Enums"]["user_role"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      store_posms: {
+        Row: {
+          created_at: string
+          id: string
+          posm_type: Database["public"]["Enums"]["posm_type"]
+          store_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          posm_type: Database["public"]["Enums"]["posm_type"]
+          store_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          posm_type?: Database["public"]["Enums"]["posm_type"]
+          store_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "store_posms_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      store_visits: {
+        Row: {
+          after_image_url: string | null
+          before_image_url: string | null
+          comments: string | null
+          completed_at: string | null
+          created_at: string
+          id: string
+          merchandiser_id: string
+          scheduled_date: string
+          store_id: string
+          updated_at: string
+          visit_order: number
+        }
+        Insert: {
+          after_image_url?: string | null
+          before_image_url?: string | null
+          comments?: string | null
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          merchandiser_id: string
+          scheduled_date: string
+          store_id: string
+          updated_at?: string
+          visit_order: number
+        }
+        Update: {
+          after_image_url?: string | null
+          before_image_url?: string | null
+          comments?: string | null
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          merchandiser_id?: string
+          scheduled_date?: string
+          store_id?: string
+          updated_at?: string
+          visit_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "store_visits_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      stores: {
+        Row: {
+          address: string
+          created_at: string
+          id: string
+          instructions: string | null
+          latitude: number
+          longitude: number
+          monthly_revenue: number | null
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          address: string
+          created_at?: string
+          id?: string
+          instructions?: string | null
+          latitude: number
+          longitude: number
+          monthly_revenue?: number | null
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          address?: string
+          created_at?: string
+          id?: string
+          instructions?: string | null
+          latitude?: number
+          longitude?: number
+          monthly_revenue?: number | null
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -18,7 +223,8 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      posm_type: "COC" | "hangsell" | "standee"
+      user_role: "admin" | "merchandiser"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -133,6 +339,9 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      posm_type: ["COC", "hangsell", "standee"],
+      user_role: ["admin", "merchandiser"],
+    },
   },
 } as const
