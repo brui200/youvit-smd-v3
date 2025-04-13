@@ -16,13 +16,20 @@ const AdminDashboard = () => {
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
-        // Fetch store count
-        const { count: storesCount, error: storesError } = await supabase
+        console.log('Fetching dashboard data...');
+        
+        // Fetch store count - Modified to use simpler query approach
+        const { data: storesData, error: storesError } = await supabase
           .from('stores')
-          .select('*', { count: 'exact', head: true });
+          .select('id');
 
-        if (storesError) throw storesError;
-        setStoreCount(storesCount || 0);
+        if (storesError) {
+          console.error('Error fetching stores:', storesError);
+          throw storesError;
+        }
+        
+        console.log('Stores data:', storesData);
+        setStoreCount(storesData?.length || 0);
 
         // Fetch merchandiser count
         const { data: merchandisers, error: merchandisersError } = await supabase
@@ -30,32 +37,47 @@ const AdminDashboard = () => {
           .select('*')
           .eq('role', 'merchandiser');
 
-        if (merchandisersError) throw merchandisersError;
-        setMerchandiserCount(merchandisers.length);
+        if (merchandisersError) {
+          console.error('Error fetching merchandisers:', merchandisersError);
+          throw merchandisersError;
+        }
+        
+        console.log('Merchandisers data:', merchandisers);
+        setMerchandiserCount(merchandisers?.length || 0);
 
-        // Fetch completed visits count
-        const { count: completedCount, error: completedError } = await supabase
+        // Fetch completed visits count - Modified to use simpler query approach
+        const { data: completedData, error: completedError } = await supabase
           .from('store_visits')
-          .select('*', { count: 'exact', head: true })
+          .select('id')
           .not('completed_at', 'is', null);
 
-        if (completedError) throw completedError;
-        setCompletedVisitsCount(completedCount || 0);
+        if (completedError) {
+          console.error('Error fetching completed visits:', completedError);
+          throw completedError;
+        }
+        
+        console.log('Completed visits data:', completedData);
+        setCompletedVisitsCount(completedData?.length || 0);
 
-        // Fetch pending visits count
-        const { count: pendingCount, error: pendingError } = await supabase
+        // Fetch pending visits count - Modified to use simpler query approach
+        const { data: pendingData, error: pendingError } = await supabase
           .from('store_visits')
-          .select('*', { count: 'exact', head: true })
+          .select('id')
           .is('completed_at', null);
 
-        if (pendingError) throw pendingError;
-        setPendingVisitsCount(pendingCount || 0);
+        if (pendingError) {
+          console.error('Error fetching pending visits:', pendingError);
+          throw pendingError;
+        }
+        
+        console.log('Pending visits data:', pendingData);
+        setPendingVisitsCount(pendingData?.length || 0);
 
       } catch (error: any) {
         console.error('Error fetching dashboard data:', error);
         toast({
           title: 'Error',
-          description: 'Failed to load dashboard data',
+          description: 'Failed to load dashboard data: ' + (error.message || 'Unknown error'),
           variant: 'destructive',
         });
       } finally {
