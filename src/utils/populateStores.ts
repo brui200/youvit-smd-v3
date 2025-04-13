@@ -71,12 +71,11 @@ interface InsertStoreParams {
   store_instructions: string | null;
 }
 
-// Modified function to bypass policy issues
+// Direct function to run once to populate the database
 export const populateJakartaStores = async (count: number = 200) => {
   try {
     const stores = [];
     let successCount = 0;
-    let progressCounter = 0;
     
     // Generate store data
     for (let i = 1; i <= count; i++) {
@@ -109,12 +108,8 @@ export const populateJakartaStores = async (count: number = 200) => {
         } else {
           successCount++;
         }
-        
-        progressCounter++;
-        // We could emit a progress event here if needed
       } catch (insertError) {
         console.error('Exception during store insert:', insertError);
-        progressCounter++;
       }
     }
     
@@ -124,3 +119,10 @@ export const populateJakartaStores = async (count: number = 200) => {
     return { success: false, error };
   }
 };
+
+// Execute the function immediately
+populateJakartaStores(200).then(result => {
+  console.log(`Population completed. Added ${result.count} stores to the database.`);
+}).catch(error => {
+  console.error('Failed to populate stores:', error);
+});

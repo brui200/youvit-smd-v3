@@ -16,7 +16,6 @@ import Index from "./pages/Index";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import DataUpload from "./pages/admin/DataUpload";
 import Stores from "./pages/admin/Stores";
-import PopulateData from "./pages/admin/PopulateData";
 
 // Merchandiser Pages
 import MerchandiserHome from "./pages/merchandiser/MerchandiserHome";
@@ -57,11 +56,6 @@ const App = () => {
               <Route path="/admin/stores" element={
                 <AdminRoute>
                   <Stores />
-                </AdminRoute>
-              } />
-              <Route path="/admin/populate" element={
-                <AdminRoute>
-                  <PopulateData />
                 </AdminRoute>
               } />
               <Route path="/admin/merchandisers" element={

@@ -45,9 +45,6 @@ const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
             <Button variant="ghost" onClick={() => navigate('/admin/upload')}>
               Data Upload
             </Button>
-            <Button variant="ghost" onClick={() => navigate('/admin/populate')}>
-              Populate Data
-            </Button>
           </nav>
         </div>
       </header>
