@@ -9,17 +9,32 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/componen
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { ChevronRight, MapPin, CheckCircle, AlertCircle } from 'lucide-react';
-import { StoreVisit, Store } from '@/types';
+import { ChevronRight, MapPin, CheckCircle, AlertCircle, Calendar } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
-// Modified type to avoid the relationship error
-type StoreVisitWithStore = StoreVisit & { 
-  store: Store;
-};
+interface VisitSchedule {
+  visit_id: string;
+  date: string;
+  merchandiser_id: string | null;
+  store_id: string;
+  store_name: string;
+  address: string;
+  lat: number;
+  lng: number;
+  area: string;
+  revenue_importance: number;
+  posm_types: string[];
+  posm_reference_images: string[];
+  planogram_url: string | null;
+  visit_order: number;
+  status: 'pending' | 'in_progress' | 'complete' | 'skipped';
+  before_photo_url: string | null;
+  after_photo_url: string | null;
+  comments: string | null;
+}
 
 const MerchandiserHome = () => {
-  const [todayVisits, setTodayVisits] = useState<StoreVisitWithStore[]>([]);
+  const [todayVisits, setTodayVisits] = useState<VisitSchedule[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [progress, setProgress] = useState(0);
@@ -36,15 +51,11 @@ const MerchandiserHome = () => {
         setError(null);
         console.log('Fetching visits for merchandiser:', user.id);
         
-        // First fetch the visits with stores, avoiding the store_posms relationship
         const { data: visitsData, error: visitsError } = await supabase
-          .from('store_visits')
-          .select(`
-            *,
-            store:stores(*)
-          `)
+          .from('visit_schedule')
+          .select('*')
           .eq('merchandiser_id', user.id)
-          .eq('scheduled_date', today)
+          .eq('date', today)
           .order('visit_order', { ascending: true });
 
         if (visitsError) {
@@ -53,45 +64,20 @@ const MerchandiserHome = () => {
           throw visitsError;
         }
 
-        if (!visitsData || visitsData.length === 0) {
-          console.log('No visits found for today');
-          setTodayVisits([]);
-          setLoading(false);
-          return;
-        }
-
         console.log('Visits fetched successfully:', visitsData);
-        
-        // For each visit, fetch the POSMs separately to avoid the relationship error
-        const visitsWithAll = await Promise.all(
-          visitsData.map(async (visit) => {
-            // Fetch POSMs for this store
-            const { data: posmsData } = await supabase
-              .from('store_posms')
-              .select('*')
-              .eq('store_id', visit.store_id);
-              
-            return {
-              ...visit,
-              store_posms: posmsData || []
-            };
-          })
-        );
-        
-        // Type casting to match what the component expects
-        setTodayVisits(visitsWithAll as StoreVisitWithStore[]);
+        setTodayVisits(visitsData || []);
         
         // Calculate progress
-        if (visitsWithAll.length > 0) {
-          const completed = visitsWithAll.filter(visit => visit.completed_at).length;
-          setProgress(Math.round((completed / visitsWithAll.length) * 100));
+        if (visitsData && visitsData.length > 0) {
+          const completed = visitsData.filter(visit => visit.status === 'complete').length;
+          setProgress(Math.round((completed / visitsData.length) * 100));
         }
-      } catch (error: any) {
-        console.error('Error in visit fetching process:', error);
-        setError(error.message);
+      } catch (err: any) {
+        console.error('Error in visit fetching process:', err);
+        setError(err.message);
         toast({
           title: 'Failed to load visits',
-          description: error.message,
+          description: err.message,
           variant: 'destructive',
         });
       } finally {
@@ -104,6 +90,19 @@ const MerchandiserHome = () => {
 
   const handleStoreClick = (visitId: string) => {
     navigate(`/visit/${visitId}`);
+  };
+
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case 'complete':
+        return <Badge className="bg-green-500">Completed</Badge>;
+      case 'in_progress':
+        return <Badge className="bg-blue-500">In Progress</Badge>;
+      case 'skipped':
+        return <Badge className="bg-gray-500">Skipped</Badge>;
+      default:
+        return <Badge variant="outline">Pending</Badge>;
+    }
   };
 
   return (
@@ -119,7 +118,7 @@ const MerchandiserHome = () => {
             <div className="flex justify-between items-center mb-1">
               <span className="text-sm font-medium">Daily Progress</span>
               <span className="text-sm font-medium">
-                {todayVisits.filter(visit => visit.completed_at).length} of {todayVisits.length} completed
+                {todayVisits.filter(visit => visit.status === 'complete').length} of {todayVisits.length} completed
               </span>
             </div>
             <Progress value={progress} className="h-2" />
@@ -156,55 +155,58 @@ const MerchandiserHome = () => {
         ) : (
           <div className="space-y-4">
             {todayVisits.map((visit) => (
-              <Card key={visit.id} className={visit.completed_at ? "opacity-70" : ""}>
+              <Card key={visit.visit_id} className={visit.status === 'complete' ? "opacity-70" : ""}>
                 <CardHeader className="pb-2">
                   <div className="flex justify-between items-start">
                     <CardTitle className="text-lg">
-                      {visit.store.name}
-                      {visit.completed_at && (
+                      {visit.store_name}
+                      {visit.status === 'complete' && (
                         <CheckCircle className="h-5 w-5 text-green-500 inline ml-2" />
                       )}
                     </CardTitle>
-                    <Badge variant="outline">
-                      Visit #{visit.visit_order}
-                    </Badge>
+                    <div className="flex items-center gap-2">
+                      {getStatusBadge(visit.status)}
+                      <Badge variant="outline">
+                        #{visit.visit_order}
+                      </Badge>
+                    </div>
                   </div>
                 </CardHeader>
                 <CardContent className="pb-2">
                   <div className="flex items-start space-x-2">
                     <MapPin className="h-4 w-4 text-muted-foreground shrink-0 mt-1" />
-                    <p className="text-sm text-muted-foreground">{visit.store.address}</p>
+                    <p className="text-sm text-muted-foreground">{visit.address}</p>
                   </div>
                   
-                  {visit.store_posms && visit.store_posms.length > 0 && (
+                  {visit.posm_types.length > 0 && (
                     <div className="mt-3">
                       <p className="text-xs font-medium mb-1">POSM to check:</p>
                       <div className="flex flex-wrap gap-1">
-                        {visit.store_posms.map((posm) => (
-                          <Badge key={posm.id} variant="secondary" className="text-xs">
-                            {posm.posm_type}
+                        {visit.posm_types.map((posm, index) => (
+                          <Badge key={index} variant="secondary" className="text-xs">
+                            {posm}
                           </Badge>
                         ))}
                       </div>
                     </div>
                   )}
                   
-                  {visit.store.instructions && (
-                    <div className="mt-3">
-                      <p className="text-xs font-medium mb-1">Instructions:</p>
-                      <p className="text-xs text-muted-foreground">
-                        {visit.store.instructions}
-                      </p>
-                    </div>
-                  )}
+                  <div className="mt-3 flex items-center text-xs text-muted-foreground">
+                    <Calendar className="h-3 w-3 mr-1" />
+                    <span>Visit #{visit.visit_order} in {visit.area}</span>
+                  </div>
                 </CardContent>
                 <CardFooter>
                   <Button 
-                    variant={visit.completed_at ? "outline" : "default"} 
+                    variant={visit.status === 'complete' ? "outline" : "default"} 
                     className="w-full flex justify-between items-center"
-                    onClick={() => handleStoreClick(visit.id)}
+                    onClick={() => handleStoreClick(visit.visit_id)}
                   >
-                    {visit.completed_at ? "View Details" : "Start Visit"}
+                    {visit.status === 'pending' 
+                      ? "Start Visit" 
+                      : visit.status === 'in_progress' 
+                        ? "Continue Visit" 
+                        : "View Details"}
                     <ChevronRight className="h-4 w-4" />
                   </Button>
                 </CardFooter>

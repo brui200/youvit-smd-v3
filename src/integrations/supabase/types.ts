@@ -215,11 +215,88 @@ export type Database = {
         }
         Relationships: []
       }
+      visit_schedule: {
+        Row: {
+          address: string
+          after_photo_url: string | null
+          area: string
+          before_photo_url: string | null
+          comments: string | null
+          created_at: string
+          date: string
+          lat: number
+          lng: number
+          merchandiser_id: string | null
+          planogram_url: string | null
+          posm_reference_images: string[]
+          posm_types: Database["public"]["Enums"]["posm_type"][]
+          revenue_importance: number
+          status: Database["public"]["Enums"]["visit_status"]
+          store_id: string
+          store_name: string
+          updated_at: string
+          visit_id: string
+          visit_order: number
+        }
+        Insert: {
+          address: string
+          after_photo_url?: string | null
+          area: string
+          before_photo_url?: string | null
+          comments?: string | null
+          created_at?: string
+          date: string
+          lat: number
+          lng: number
+          merchandiser_id?: string | null
+          planogram_url?: string | null
+          posm_reference_images: string[]
+          posm_types: Database["public"]["Enums"]["posm_type"][]
+          revenue_importance?: number
+          status?: Database["public"]["Enums"]["visit_status"]
+          store_id: string
+          store_name: string
+          updated_at?: string
+          visit_id?: string
+          visit_order: number
+        }
+        Update: {
+          address?: string
+          after_photo_url?: string | null
+          area?: string
+          before_photo_url?: string | null
+          comments?: string | null
+          created_at?: string
+          date?: string
+          lat?: number
+          lng?: number
+          merchandiser_id?: string | null
+          planogram_url?: string | null
+          posm_reference_images?: string[]
+          posm_types?: Database["public"]["Enums"]["posm_type"][]
+          revenue_importance?: number
+          status?: Database["public"]["Enums"]["visit_status"]
+          store_id?: string
+          store_name?: string
+          updated_at?: string
+          visit_id?: string
+          visit_order?: number
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      assign_visits_to_merchandisers: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
+      generate_dummy_stores: {
+        Args: { count: number; areas: string[] }
+        Returns: undefined
+      }
       get_admin_dashboard_counts: {
         Args: Record<PropertyKey, never>
         Returns: Json
@@ -261,6 +338,7 @@ export type Database = {
     Enums: {
       posm_type: "COC" | "hangsell" | "standee"
       user_role: "admin" | "merchandiser"
+      visit_status: "pending" | "in_progress" | "complete" | "skipped"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -378,6 +456,7 @@ export const Constants = {
     Enums: {
       posm_type: ["COC", "hangsell", "standee"],
       user_role: ["admin", "merchandiser"],
+      visit_status: ["pending", "in_progress", "complete", "skipped"],
     },
   },
 } as const

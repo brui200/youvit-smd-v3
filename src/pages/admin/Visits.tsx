@@ -3,7 +3,6 @@ import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import AdminLayout from '@/layouts/AdminLayout';
-import { StoreVisit, Profile, Store } from '@/types';
 import { Button } from '@/components/ui/button';
 import {
   Table,
@@ -22,33 +21,54 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { format } from 'date-fns';
-import { Calendar, CheckCircle, Store as StoreIcon, User } from 'lucide-react';
+import { Calendar, CheckCircle, Store as StoreIcon, User, MapPin } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 
-// Define an extended type with joined data
-type ExtendedStoreVisit = StoreVisit & {
-  store: Store;
-  merchandiser: Profile;
-};
+// Define a type for our visit schedule data
+interface VisitSchedule {
+  visit_id: string;
+  date: string;
+  merchandiser_id: string | null;
+  store_id: string;
+  store_name: string;
+  address: string;
+  lat: number;
+  lng: number;
+  area: string;
+  revenue_importance: number;
+  posm_types: string[];
+  posm_reference_images: string[];
+  planogram_url: string | null;
+  visit_order: number;
+  status: 'pending' | 'in_progress' | 'complete' | 'skipped';
+  before_photo_url: string | null;
+  after_photo_url: string | null;
+  comments: string | null;
+  merchandiser?: {
+    id: string;
+    name: string;
+    phone: string | null;
+  };
+}
 
 const Visits = () => {
   const { toast } = useToast();
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [filterDate, setFilterDate] = useState<string>('all');
+  const [filterArea, setFilterArea] = useState<string>('all');
 
-  // Fetch all visits with store and merchandiser data
+  // Fetch all visits with merchandiser data
   const { data: visits, isLoading, refetch } = useQuery({
-    queryKey: ['admin-visits'],
+    queryKey: ['admin-visits-schedule'],
     queryFn: async () => {
-      console.log('Fetching all visits...');
+      console.log('Fetching visit schedule...');
       
       const { data, error } = await supabase
-        .from('store_visits')
+        .from('visit_schedule')
         .select(`
           *,
-          store:stores(*),
-          merchandiser:profiles(*)
+          merchandiser:profiles(id, name, phone)
         `);
       
       if (error) {
@@ -62,10 +82,7 @@ const Visits = () => {
       }
       
       console.log('Visits fetched:', data);
-      
-      // Type assertion to ensure proper conversion
-      const typedData = data as unknown as ExtendedStoreVisit[];
-      return typedData;
+      return data as VisitSchedule[];
     },
   });
 
@@ -73,9 +90,9 @@ const Visits = () => {
   const cancelVisit = async (visitId: string) => {
     try {
       const { error } = await supabase
-        .from('store_visits')
-        .delete()
-        .eq('id', visitId);
+        .from('visit_schedule')
+        .update({ status: 'skipped' })
+        .eq('visit_id', visitId);
         
       if (error) {
         toast({
@@ -88,7 +105,7 @@ const Visits = () => {
       
       toast({
         title: 'Visit cancelled',
-        description: 'The store visit has been cancelled successfully.',
+        description: 'The store visit has been marked as skipped.',
       });
       
       refetch();
@@ -101,11 +118,16 @@ const Visits = () => {
     }
   };
 
-  // Filter visits based on status and date
+  // Get unique areas for filtering
+  const areas = visits ? [...new Set(visits.map(visit => visit.area))].sort() : [];
+
+  // Filter visits based on status, date, and area
   const filteredVisits = visits?.filter(visit => {
     // Filter by status
-    if (filterStatus === 'completed' && !visit.completed_at) return false;
-    if (filterStatus === 'pending' && visit.completed_at) return false;
+    if (filterStatus === 'completed' && visit.status !== 'complete') return false;
+    if (filterStatus === 'pending' && visit.status !== 'pending') return false;
+    if (filterStatus === 'in_progress' && visit.status !== 'in_progress') return false;
+    if (filterStatus === 'skipped' && visit.status !== 'skipped') return false;
     
     // Filter by date
     const today = new Date().toISOString().split('T')[0];
@@ -113,19 +135,42 @@ const Visits = () => {
     tomorrow.setDate(tomorrow.getDate() + 1);
     const tomorrowStr = tomorrow.toISOString().split('T')[0];
     
-    if (filterDate === 'today' && visit.scheduled_date !== today) return false;
-    if (filterDate === 'tomorrow' && visit.scheduled_date !== tomorrowStr) return false;
-    if (filterDate === 'upcoming' && new Date(visit.scheduled_date) <= new Date()) return false;
-    if (filterDate === 'past' && new Date(visit.scheduled_date) >= new Date()) return false;
+    if (filterDate === 'today' && visit.date !== today) return false;
+    if (filterDate === 'tomorrow' && visit.date !== tomorrowStr) return false;
+    if (filterDate === 'upcoming' && new Date(visit.date) <= new Date()) return false;
+    if (filterDate === 'past' && new Date(visit.date) >= new Date()) return false;
+    
+    // Filter by area
+    if (filterArea !== 'all' && visit.area !== filterArea) return false;
     
     return true;
   });
+
+  // Function to get appropriate badge color based on status
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case 'complete':
+        return <Badge className="bg-green-500"><CheckCircle className="h-3 w-3 mr-1" /> Completed</Badge>;
+      case 'in_progress':
+        return <Badge className="bg-blue-500">In Progress</Badge>;
+      case 'skipped':
+        return <Badge className="bg-gray-500">Skipped</Badge>;
+      case 'pending':
+      default:
+        return <Badge variant="outline">Pending</Badge>;
+    }
+  };
+
+  // Function to open maps with lat/lng
+  const openMapsLink = (lat: number, lng: number) => {
+    window.open(`https://www.google.com/maps/search/?api=1&query=${lat},${lng}`, '_blank');
+  };
 
   return (
     <AdminLayout>
       <div className="space-y-6">
         <div className="flex justify-between items-center">
-          <h1 className="text-2xl font-bold">Visits Management</h1>
+          <h1 className="text-2xl font-bold">Visit Schedule Management</h1>
           <div className="flex space-x-2">
             <Select value={filterStatus} onValueChange={setFilterStatus}>
               <SelectTrigger className="w-[150px]">
@@ -135,6 +180,8 @@ const Visits = () => {
                 <SelectItem value="all">All Status</SelectItem>
                 <SelectItem value="completed">Completed</SelectItem>
                 <SelectItem value="pending">Pending</SelectItem>
+                <SelectItem value="in_progress">In Progress</SelectItem>
+                <SelectItem value="skipped">Skipped</SelectItem>
               </SelectContent>
             </Select>
             
@@ -150,6 +197,18 @@ const Visits = () => {
                 <SelectItem value="past">Past</SelectItem>
               </SelectContent>
             </Select>
+
+            <Select value={filterArea} onValueChange={setFilterArea}>
+              <SelectTrigger className="w-[150px]">
+                <SelectValue placeholder="Area" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Areas</SelectItem>
+                {areas.map(area => (
+                  <SelectItem key={area} value={area}>{area}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         </div>
         
@@ -159,64 +218,85 @@ const Visits = () => {
           </div>
         ) : filteredVisits && filteredVisits.length > 0 ? (
           <Table>
-            <TableCaption>List of all store visits scheduled for merchandisers</TableCaption>
+            <TableCaption>List of all scheduled store visits</TableCaption>
             <TableHeader>
               <TableRow>
                 <TableHead>Store</TableHead>
                 <TableHead>Merchandiser</TableHead>
                 <TableHead>Date</TableHead>
+                <TableHead>Area</TableHead>
+                <TableHead>POSM Types</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filteredVisits.map((visit) => (
-                <TableRow key={visit.id}>
+                <TableRow key={visit.visit_id}>
                   <TableCell className="font-medium">
                     <div className="flex items-center gap-2">
                       <StoreIcon className="h-4 w-4 text-gray-500" />
-                      {visit.store.name}
+                      {visit.store_name}
                     </div>
-                    <div className="text-xs text-gray-500 mt-1">{visit.store.address}</div>
+                    <div className="text-xs text-gray-500 mt-1 flex items-center">
+                      <button 
+                        onClick={() => openMapsLink(visit.lat, visit.lng)} 
+                        className="inline-flex items-center text-blue-500 hover:underline"
+                      >
+                        <MapPin className="h-3 w-3 mr-1" />
+                        {visit.address}
+                      </button>
+                    </div>
                   </TableCell>
                   <TableCell>
-                    <div className="flex items-center gap-2">
-                      <User className="h-4 w-4 text-gray-500" />
-                      {visit.merchandiser.name}
-                    </div>
-                    <div className="text-xs text-gray-500 mt-1">
-                      {visit.merchandiser.phone || 'No phone'}
-                    </div>
+                    {visit.merchandiser ? (
+                      <div className="flex items-center gap-2">
+                        <User className="h-4 w-4 text-gray-500" />
+                        {visit.merchandiser.name}
+                        {visit.merchandiser.phone && (
+                          <div className="text-xs text-gray-500">
+                            {visit.merchandiser.phone}
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <Badge variant="outline">Unassigned</Badge>
+                    )}
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-1">
                       <Calendar className="h-4 w-4 text-gray-500" />
-                      {format(new Date(visit.scheduled_date), 'MMM d, yyyy')}
+                      {format(new Date(visit.date), 'MMM d, yyyy')}
                     </div>
                     <div className="text-xs text-gray-500 mt-1">
                       Visit #{visit.visit_order} of the day
                     </div>
                   </TableCell>
                   <TableCell>
-                    {visit.completed_at ? (
-                      <Badge className="bg-green-500">
-                        <CheckCircle className="h-3 w-3 mr-1" />
-                        Completed
-                      </Badge>
-                    ) : (
-                      <Badge variant="outline">Pending</Badge>
-                    )}
+                    <Badge variant="secondary">{visit.area}</Badge>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex flex-wrap gap-1">
+                      {visit.posm_types.map((posm, index) => (
+                        <Badge key={index} variant="outline" className="text-xs">
+                          {posm}
+                        </Badge>
+                      ))}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    {getStatusBadge(visit.status)}
                   </TableCell>
                   <TableCell>
                     <div className="flex space-x-2">
-                      {!visit.completed_at && (
+                      {visit.status === 'pending' && (
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => cancelVisit(visit.id)}
+                          onClick={() => cancelVisit(visit.visit_id)}
                           className="text-red-500 border-red-200 hover:bg-red-50"
                         >
-                          Cancel
+                          Skip
                         </Button>
                       )}
                       <Button
@@ -246,12 +326,77 @@ const Visits = () => {
               onClick={() => {
                 setFilterStatus('all');
                 setFilterDate('all');
+                setFilterArea('all');
               }}
             >
               Clear filters
             </Button>
           </div>
         )}
+
+        <div className="pt-4 flex gap-4">
+          <Button
+            className="flex-1"
+            onClick={() => {
+              toast({
+                title: "Data Generator",
+                description: "Generating dummy visit data...",
+              });
+              
+              // Execute the dummy data generation function
+              supabase.rpc('generate_dummy_stores', { 
+                count: 50,
+                areas: ['Jakarta Pusat', 'Jakarta Utara', 'Jakarta Barat', 'Jakarta Selatan', 'Jakarta Timur']
+              })
+                .then(() => {
+                  toast({
+                    title: "Success",
+                    description: "Dummy data has been generated.",
+                  });
+                  refetch();
+                })
+                .catch(err => {
+                  toast({
+                    title: "Error",
+                    description: "Failed to generate dummy data: " + err.message,
+                    variant: "destructive"
+                  });
+                });
+            }}
+          >
+            Generate Dummy Visit Data
+          </Button>
+          
+          <Button
+            variant="outline"
+            className="flex-1"
+            onClick={() => {
+              toast({
+                title: "Assign Visits",
+                description: "Assigning visits to merchandisers...",
+              });
+              
+              // Execute the assignment function
+              supabase.rpc('assign_visits_to_merchandisers')
+                .then(() => {
+                  toast({
+                    title: "Success",
+                    description: "Visits have been assigned to merchandisers.",
+                  });
+                  refetch();
+                })
+                .catch(err => {
+                  toast({
+                    title: "Error",
+                    description: "Failed to assign visits: " + err.message,
+                    variant: "destructive"
+                  });
+                });
+            }}
+          >
+            Assign Visits to Merchandisers
+          </Button>
+        </div>
       </div>
     </AdminLayout>
   );

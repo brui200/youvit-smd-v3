@@ -22,6 +22,7 @@ import Visits from "./pages/admin/Visits";
 // Merchandiser Pages
 import MerchandiserHome from "./pages/merchandiser/MerchandiserHome";
 import StoreVisit from "./pages/merchandiser/StoreVisit";
+import MerchandiserVisit from "./pages/merchandiser/MerchandiserVisit";
 import Map from "./pages/merchandiser/Map";
 import Profile from "./pages/merchandiser/Profile";
 
@@ -83,6 +84,11 @@ const App = () => {
                 </ProtectedRoute>
               } />
               <Route path="/visit/:visitId" element={
+                <ProtectedRoute>
+                  <MerchandiserVisit />
+                </ProtectedRoute>
+              } />
+              <Route path="/legacy-visit/:visitId" element={
                 <ProtectedRoute>
                   <StoreVisit />
                 </ProtectedRoute>
