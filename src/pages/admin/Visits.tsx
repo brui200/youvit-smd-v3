@@ -49,7 +49,7 @@ interface VisitSchedule {
     id: string;
     name: string;
     phone: string | null;
-  };
+  } | null; // Allow null in case of error or missing data
 }
 
 const Visits = () => {
@@ -82,7 +82,8 @@ const Visits = () => {
       }
       
       console.log('Visits fetched:', data);
-      return data as VisitSchedule[];
+      // Cast the data as unknown first, then to VisitSchedule[]
+      return (data as unknown) as VisitSchedule[];
     },
   });
 
@@ -355,7 +356,7 @@ const Visits = () => {
                   });
                   refetch();
                 })
-                .catch(err => {
+                .catch((err: Error) => {
                   toast({
                     title: "Error",
                     description: "Failed to generate dummy data: " + err.message,
@@ -385,7 +386,7 @@ const Visits = () => {
                   });
                   refetch();
                 })
-                .catch(err => {
+                .catch((err: Error) => {
                   toast({
                     title: "Error",
                     description: "Failed to assign visits: " + err.message,
