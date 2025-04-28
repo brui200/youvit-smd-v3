@@ -344,25 +344,27 @@ const Visits = () => {
                 description: "Generating dummy visit data...",
               });
               
-              // Execute the dummy data generation function
-              supabase.rpc('generate_dummy_stores', { 
-                count: 50,
-                areas: ['Jakarta Pusat', 'Jakarta Utara', 'Jakarta Barat', 'Jakarta Selatan', 'Jakarta Timur']
-              })
-                .then(() => {
+              // Fix: Properly handle the promise with async/await
+              (async () => {
+                try {
+                  await supabase.rpc('generate_dummy_stores', { 
+                    count: 50,
+                    areas: ['Jakarta Pusat', 'Jakarta Utara', 'Jakarta Barat', 'Jakarta Selatan', 'Jakarta Timur']
+                  });
+                  
                   toast({
                     title: "Success",
                     description: "Dummy data has been generated.",
                   });
                   refetch();
-                })
-                .catch((err: Error) => {
+                } catch (err: any) {
                   toast({
                     title: "Error",
                     description: "Failed to generate dummy data: " + err.message,
                     variant: "destructive"
                   });
-                });
+                }
+              })();
             }}
           >
             Generate Dummy Visit Data
@@ -377,22 +379,24 @@ const Visits = () => {
                 description: "Assigning visits to merchandisers...",
               });
               
-              // Execute the assignment function
-              supabase.rpc('assign_visits_to_merchandisers')
-                .then(() => {
+              // Fix: Properly handle the promise with async/await
+              (async () => {
+                try {
+                  await supabase.rpc('assign_visits_to_merchandisers');
+                  
                   toast({
                     title: "Success",
                     description: "Visits have been assigned to merchandisers.",
                   });
                   refetch();
-                })
-                .catch((err: Error) => {
+                } catch (err: any) {
                   toast({
                     title: "Error",
                     description: "Failed to assign visits: " + err.message,
                     variant: "destructive"
                   });
-                });
+                }
+              })();
             }}
           >
             Assign Visits to Merchandisers
