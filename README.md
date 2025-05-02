@@ -1,4 +1,6 @@
-# Project for creating a merchandiser software tool
+# Project: Call Plan SaaS for Retail Merchandisers
+
+The software includes an Admin Dashboard and a Merchandiser App. Admins use their portal to give input and to run an internal algorithm that generates optimized call plans based on store location (via Places API), planogram adherence (via computer vision and merchandiser's pictures), sales data, marketing material presence, etc. Merchandisers log in, view their daily route, visit stores, upload photos, and complete simple checklists. The system uses photo and other merchandiser inputs to assess compliance and update store performance in real time. Goal is to (i) reduce time spent per store (ii) prioritize the most important stores. 
 
 
 
