@@ -1,3 +1,11 @@
+# Project for creating an merchandiser software tool
+
+
+
+
+
+
+
 # Welcome to your Lovable project
 
 ## Project info
