@@ -1,4 +1,4 @@
-# Project for creating an merchandiser software tool
+# Project for creating a merchandiser software tool
 
 
 
